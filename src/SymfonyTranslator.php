@@ -5,7 +5,9 @@ declare (strict_types=1);
 namespace Vzina\LaravelValidation;
 
 use Illuminate\Contracts\Translation\Translator as TranslatorInterface;
+use Vzina\Attributes\Attribute\Depend;
 
+#[Depend(id: TranslatorInterface::class)]
 class SymfonyTranslator implements TranslatorInterface
 {
     public function get($key, array $replace = [], $locale = null)

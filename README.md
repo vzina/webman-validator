@@ -10,7 +10,7 @@
 ```php
 use Vzina\LaravelValidation\ValidatorFactory;
 
-$validator = ValidatorFactory::create()->make(request_all(), [
+$validator = make_validator(request_all(), [
     'title' => 'required|unique:posts|max:255',
     'file' => 'required|file|image',
     'body' => 'required',
@@ -19,6 +19,13 @@ $validator = ValidatorFactory::create()->make(request_all(), [
 if ($validator->fails()) {
     return json($validator->errors()->first());
 }
+
+// 或者
+request_validate([
+    'title' => 'required|unique:posts|max:255',
+    'file' => 'required|file|image',
+    'body' => 'required',
+]);
 ```
 
 ### 注解使用

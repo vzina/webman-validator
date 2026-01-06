@@ -19,7 +19,7 @@ class ValidatorFactory extends Factory
     public static function create()
     {
         if (! isset(static::$instance)) {
-            $translator = Container::get(Container::has(TranslatorInterface::class) ? TranslatorInterface::class : SymfonyTranslator::class);
+            $translator = Container::get(TranslatorInterface::class);
             $validatorFactory = new static($translator, IlluminateContainer::getInstance());
 
             if (Container::has(DatabasePresenceVerifierInterface::class)) {
