@@ -20,7 +20,8 @@ class Validator extends AbstractAttribute
 {
     public function __construct(
         public array $rules = [],
-        public array $messages = []
+        public array $messages = [],
+        public array $customAttributes = []
     ) {
     }
 }

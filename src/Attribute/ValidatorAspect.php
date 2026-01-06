@@ -12,10 +12,9 @@ declare (strict_types=1);
 
 namespace Vzina\LaravelValidation\Attribute;
 
+use Illuminate\Validation\ValidationException;
 use Vzina\Attributes\Ast\ProceedingJoinPoint;
 use Vzina\Attributes\Attribute\AspectInterface;
-use Vzina\LaravelValidation\ValidatorException;
-use Vzina\LaravelValidation\ValidatorFactory;
 
 class ValidatorAspect implements AspectInterface
 {
@@ -23,15 +22,15 @@ class ValidatorAspect implements AspectInterface
         Validator::class
     ];
 
+    /**
+     * @throws ValidationException
+     */
     public function process(ProceedingJoinPoint $proceedingJoinPoint)
     {
         /** @var Validator $attribute */
         $attribute = $proceedingJoinPoint->getAnnotationMetadata()->method[Validator::class];
         if ($attribute->rules) {
-            $validator = ValidatorFactory::create()->make(request_all(), $attribute->rules, $attribute->messages);
-            if ($validator->fails()) {
-                throw new ValidatorException($validator->errors()->first());
-            }
+            request_validate($attribute->rules, $attribute->messages, $attribute->customAttributes);
         }
 
         return $proceedingJoinPoint->process();
