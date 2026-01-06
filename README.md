@@ -21,86 +21,59 @@ if ($validator->fails()) {
 }
 ```
 
+### 注解使用
+
 ```php
-namespace app\Service;
+use Vzina\Attributes\Attribute\Route\Controller;
+use Vzina\Attributes\Attribute\Route\GetMapping;
+use Vzina\Attributes\Attribute\Route\PostMapping;
+use Vzina\LaravelValidation\Attribute\Validator;
 
-use Vzina\Jsonrpc\Attribute\RpcServer;
-
-#[RpcServer]
-class TestService
+#[Controller(prefix: '/api')]
+class TestController
 {
-    public function rpc(): array
+    #[GetMapping(path: ''), Validator([
+        'a' => 'required|int',
+        'b' => 'required|foo',
+    ])]
+    public function index()
     {
-        return ['test', time()];
+        return 'index:' . time();
+    }
+
+    #[PostMapping(path: 'upload'), Validator([
+        'file' => 'required|file|image',
+    ])]
+    public function upload()
+    {
+        return 'upload:' . time();
     }
 }
 ```
 
-#### 定义客户端
+
+### 扩展规则
 
 ```php
-namespace app\Client;
 
-use support\Container;
-use Vzina\Jsonrpc\Ast\AbstractProxyService;use Vzina\Jsonrpc\ServiceClient;
+use Illuminate\Validation\Validator;
+use Vzina\Attributes\Attribute\Listener;
+use Vzina\LaravelValidation\ValidatorFactory;
+use Vzina\LaravelValidation\ValidatorFactoryResolved;
 
-class TestService
+#[Listener(event: ValidatorFactoryResolved::class)]
+class ValidatorListener
 {
-    protected ServiceClient $serviceClient;
-    
-    public function __construct() 
+    public function handle(ValidatorFactory $factory)
     {
-        $this->serviceClient = new ServiceClient(static::class, [
-            'address' => ['http://127.0.0.1:8788'],
-            'timeout' => 60,
-            'pool' => [
-                'max_connections' => 10,
-            ]
-        ]);
-    }
+        $factory->extend('foo', function (string $attribute, mixed $value, array $parameters, Validator $validator): bool {
+            return $value == 'foo';
+        });
 
-    public function rpc(): array
-    {
-        return $this->serviceClient->__call(__FUNCTION__, func_get_args());
+        // 当创建一个自定义验证规则时，你可能有时候需要为错误信息定义自定义占位符这里扩展了 :foo 占位符
+        $factory->replacer('foo', function (string $message, string $attribute, string $rule, array $parameters): array|string {
+            return str_replace(':foo', $attribute, $message);
+        });
     }
 }
-
-// 或
-class TestService extends AbstractProxyService
-{
-    public function rpc(): array
-    {
-        return $this->client->__call(__FUNCTION__, func_get_args());
-    }
-}
-
-// 修改配置文件 rpc_services.php
-[
-    'name' => TestService::class, // 指定客户端类
-    // ... other
-]
-
-// 使用
-$r = Container::get(TestService::class)->rpc();
-var_dump($r);
-```
-
-#### 定义自动客户端
-```php
-namespace app\contracts;
-
-interface TestServiceInterface
-{
-    public function rpc(): array;
-}
-
-// 修改配置文件 rpc_services.php
-[
-    'auto_services' => app_path('contracts'), // 指定客户端扫描目录
-    // ... other
-]
-
-// 使用
-$r = Container::get(TestServiceInterface::class)->rpc();
-var_dump($r);
 ```
